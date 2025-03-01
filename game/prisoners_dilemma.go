@@ -3,10 +3,19 @@ package game
 import (
 	"fmt"
 	"judge/player"
-	"judge/validator"
 )
 
-func playRoundPrisonersDilemma(c, i, j int, player1, player2 *player.Player, verbose bool) (int, error) {
+type PrisonersDilemma struct{}
+
+func NewPrisonersDilemma() *PrisonersDilemma {
+	return &PrisonersDilemma{}
+}
+
+func (g *PrisonersDilemma) Name() string {
+	return "prisoners_dilemma"
+}
+
+func (g *PrisonersDilemma) playRound(c, i, j int, player1, player2 *player.Player, verbose bool) (int, error) {
 	if verbose {
 		fmt.Printf("Iteration %d:\n", c+1)
 	}
@@ -21,10 +30,10 @@ func playRoundPrisonersDilemma(c, i, j int, player1, player2 *player.Player, ver
 		return j, fmt.Errorf("player %d error: %v", j, err)
 	}
 
-	if err := validator.Validate(choice1, "prisoners_dilemma"); err != nil {
+	if err := g.validate(choice1); err != nil {
 		return i, fmt.Errorf("player %d invalid choice: %v", i, err)
 	}
-	if err := validator.Validate(choice2, "prisoners_dilemma"); err != nil {
+	if err := g.validate(choice2); err != nil {
 		return j, fmt.Errorf("player %d invalid choice: %v", j, err)
 	}
 
@@ -58,4 +67,19 @@ func calculateScoresPrisonersDilemma(choice1, choice2 string) (int, int) {
 		return 1, 1
 	}
 	return 0, 0
+}
+
+func (g PrisonersDilemma) validate(output string) error {
+	validChoices := map[string]struct{}{
+		"Y": {},
+		"N": {},
+	}
+
+	if _, ok := validChoices[output]; !ok {
+		return fmt.Errorf(
+			"invalid choice '%s', expected Y or N",
+			output,
+		)
+	}
+	return nil
 }

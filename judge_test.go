@@ -3,7 +3,6 @@ package main_test
 import (
 	"judge/game"
 	"judge/player"
-	"judge/validator"
 	"testing"
 	"time"
 
@@ -64,14 +63,18 @@ func TestPlayer_TwiceStoped(t *testing.T) {
 }
 
 func TestValidator(t *testing.T) {
-	err := validator.Validate("Y", "prisoners_dilemma")
+	player1, err := player.NewPlayer("tests/prisoners_dilemma/kind.py")
 	require.NoError(t, err)
-	err = validator.Validate("N", "prisoners_dilemma")
+	player2, err := player.NewPlayer("tests/prisoners_dilemma/evil.py")
 	require.NoError(t, err)
-	err = validator.Validate("ABC", "prisoners_dilemma")
+	player3, err := player.NewPlayer("tests/hello.py")
+	require.NoError(t, err)
+	players := []*player.Player{player1, player2, player3}
+	err = game.Play("prisoners_dilemma", 10, players, false)
 	require.ErrorContains(t, err, "invalid choice")
-	err = validator.Validate("ABC", "not_existing_game")
-	require.ErrorContains(t, err, "unsupported game")
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 100)
+	require.Equal(t, player3.GetScore(), 0)
 }
 
 func TestGame_PrisonersDilemma(t *testing.T) {
@@ -80,9 +83,7 @@ func TestGame_PrisonersDilemma(t *testing.T) {
 	player2, err := player.NewPlayer("tests/prisoners_dilemma/evil.py")
 	require.NoError(t, err)
 	players := []*player.Player{player1, player2}
-	game, err := game.NewGame("prisoners_dilemma", &players)
-	require.NoError(t, err)
-	err = game.Play(10, false)
+	err = game.Play("prisoners_dilemma", 10, players, false)
 	require.NoError(t, err)
 	require.Equal(t, player1.GetScore(), 0)
 	require.Equal(t, player2.GetScore(), 100)
@@ -94,10 +95,8 @@ func TestGame_PrisonersDilemma_SilentPlayer(t *testing.T) {
 	player2, err := player.NewPlayer("tests/prisoners_dilemma/evil.py")
 	require.NoError(t, err)
 	players := []*player.Player{player1, player2}
-	game, err := game.NewGame("prisoners_dilemma", &players)
-	require.NoError(t, err)
 	timer := time.Now()
-	err = game.Play(10, false)
+	err = game.Play("prisoners_dilemma", 10, players, false)
 	require.ErrorContains(t, err, "failed to get choice from player: timeout exceeded")
 	require.Equal(t, time.Now().Compare(timer.Add(time.Second)), -1)
 	require.Equal(t, player1.GetScore(), 0)
@@ -105,7 +104,7 @@ func TestGame_PrisonersDilemma_SilentPlayer(t *testing.T) {
 }
 
 func TestGame_Unsupported(t *testing.T) {
-	_, err := game.NewGame("not_existing_game", &[]*player.Player{})
+	err := game.Play("not_existing_game", 10, []*player.Player{}, false)
 	require.ErrorContains(t, err, "unsupported game")
 }
 
@@ -125,10 +124,8 @@ func TestGame_PrisonersDilemma_ManyPlayers(t *testing.T) {
 	player7, err := player.NewPlayer("tests/prisoners_dilemma/tit_for_tat.py")
 	require.NoError(t, err)
 	players := []*player.Player{player1, player2, player3, player4, player5, player6, player7}
-	game, err := game.NewGame("prisoners_dilemma", &players)
-	require.NoError(t, err)
 	timer := time.Now()
-	err = game.Play(10, false)
+	err = game.Play("prisoners_dilemma", 10, players, false)
 	require.ErrorContains(t, err, "failed to get choice from player: timeout exceeded")
 	require.Equal(t, time.Now().Compare(timer.Add(time.Second*2)), -1)
 	require.Equal(t, player1.GetScore(), 0)

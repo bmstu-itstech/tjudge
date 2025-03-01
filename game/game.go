@@ -7,26 +7,30 @@ import (
 	"time"
 )
 
-type Game struct {
-	name    string
-	players *[]*player.Player
+type game interface {
+	validate(output string) error
+	playRound(c, i, j int, player1, player2 *player.Player, verbose bool) (int, error)
 }
 
-func NewGame(name string, players *[]*player.Player) (*Game, error) {
+func newGame(name string) (game, error) {
 	switch name {
 	case "prisoners_dilemma":
-		break
+		return NewPrisonersDilemma(), nil
 	default:
-		return nil, fmt.Errorf("unsupported game")
+		return nil, errors.New("unsupported game")
 	}
-	return &Game{name: name, players: players}, nil
 }
 
-func (g *Game) Play(count int, verbose bool) error {
+func Play(name string, count int, players []*player.Player, verbose bool) error {
 	var ignore map[int]error = make(map[int]error)
 
-	for i, player1 := range *g.players {
-		for j, player2 := range *g.players {
+	g, err := newGame(name)
+	if err != nil {
+		return err
+	}
+
+	for i, player1 := range players {
+		for j, player2 := range players {
 			if i == j {
 				continue
 			}
@@ -47,12 +51,9 @@ func (g *Game) Play(count int, verbose bool) error {
 				if flag {
 					break
 				}
-				switch g.name {
-				case "prisoners_dilemma":
-					if k, err := playRoundPrisonersDilemma(c, i, j, player1, player2, verbose); err != nil {
-						ignore[k] = err
-						flag = true
-					}
+				if k, err := g.playRound(c, i, j, player1, player2, verbose); err != nil {
+					ignore[k] = err
+					flag = true
 				}
 			}
 
@@ -60,8 +61,6 @@ func (g *Game) Play(count int, verbose bool) error {
 			player2.StopGame()
 		}
 	}
-
-	var err error
 
 	for i := range ignore {
 		err = errors.Join(ignore[i])

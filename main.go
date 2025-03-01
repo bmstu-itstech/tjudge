@@ -19,7 +19,7 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() < 3 {
-		fmt.Println("judge <game> <args> <program1> <program2>")
+		fmt.Println("judge <args> <game> <program1> <program2>")
 		fmt.Println("games:\n", Dilemma)
 		flag.Usage()
 		return
@@ -36,13 +36,13 @@ func main() {
 		players = append(players, playeri)
 	}
 
-	g, err := game.NewGame(flag.Arg(0), &players)
-	if err != nil {
-		fmt.Println("error creating game:", err)
-		return
-	}
+	// g, err := game.NewGame()
+	// if err != nil {
+	// 	fmt.Println("error creating game:", err)
+	// 	return
+	// }
 
-	err = g.Play(int(*count), *verbose)
+	err := game.Play(flag.Arg(0), int(*count), players, *verbose)
 	if err != nil {
 		fmt.Println("error playing round:", err)
 	}
