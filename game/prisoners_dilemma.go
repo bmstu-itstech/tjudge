@@ -15,34 +15,34 @@ func (g *PrisonersDilemma) Name() string {
 	return "prisoners_dilemma"
 }
 
-func (g *PrisonersDilemma) playRound(c, i, j int, player1, player2 *player.Player, verbose bool) (int, error) {
+func (g *PrisonersDilemma) playRound(c int, player1, player2 *player.Player, verbose bool) (int, error) {
 	if verbose {
 		fmt.Printf("Iteration %d:\n", c+1)
 	}
 
 	choice1, err := getPlayerChoice(player1, verbose)
 	if err != nil {
-		return i, fmt.Errorf("player %d error: %v", i, err)
+		return 1, fmt.Errorf("player %d error: %v", 1, err)
 	}
 
 	choice2, err := getPlayerChoice(player2, verbose)
 	if err != nil {
-		return j, fmt.Errorf("player %d error: %v", j, err)
+		return 2, fmt.Errorf("player %d error: %v", 2, err)
 	}
 
 	if err := g.validate(choice1); err != nil {
-		return i, fmt.Errorf("player %d invalid choice: %v", i, err)
+		return 1, fmt.Errorf("player %d invalid choice: %v", 1, err)
 	}
 	if err := g.validate(choice2); err != nil {
-		return j, fmt.Errorf("player %d invalid choice: %v", j, err)
+		return 2, fmt.Errorf("player %d invalid choice: %v", 2, err)
 	}
 
 	if err := player1.Send(choice2); err != nil {
-		return i, fmt.Errorf("failed to send input to player %d: %v", i, err)
+		return 1, fmt.Errorf("failed to send input to player %d: %v", 1, err)
 	}
 
 	if err := player2.Send(choice1); err != nil {
-		return j, fmt.Errorf("failed to send input to player %d: %v", j, err)
+		return 2, fmt.Errorf("failed to send input to player %d: %v", 2, err)
 	}
 
 	s1, s2 := calculateScoresPrisonersDilemma(choice1, choice2)
@@ -50,8 +50,8 @@ func (g *PrisonersDilemma) playRound(c, i, j int, player1, player2 *player.Playe
 	player2.AddScore(s2)
 
 	if verbose {
-		fmt.Printf("Player %d choice: %s, Player %d choice: %s\n", i, choice1, j, choice2)
-		fmt.Printf("Scores after iteration %d: Player %d: %d, Player %d: %d\n", c, i, player1.GetScore(), j, player2.GetScore())
+		fmt.Printf("Player %d choice: %s, Player %d choice: %s\n", 1, choice1, 2, choice2)
+		fmt.Printf("Scores after iteration %d: Player %d: %d, Player %d: %d\n", c, 1, player1.GetScore(), 2, player2.GetScore())
 	}
 	return -1, nil
 }

@@ -9,7 +9,8 @@ import (
 
 type game interface {
 	validate(output string) error
-	playRound(c, i, j int, player1, player2 *player.Player, verbose bool) (int, error)
+	playRound(c int, player1, player2 *player.Player, verbose bool) (int, error)
+	Name() string
 }
 
 func newGame(name string) (game, error) {
@@ -21,7 +22,7 @@ func newGame(name string) (game, error) {
 	}
 }
 
-func Play(name string, count int, players []*player.Player, verbose bool) error {
+func Play(name string, count int, player1 *player.Player, player2 *player.Player, verbose bool) error {
 	var ignore map[int]error = make(map[int]error)
 
 	g, err := newGame(name)
@@ -29,38 +30,22 @@ func Play(name string, count int, players []*player.Player, verbose bool) error 
 		return err
 	}
 
-	for i, player1 := range players {
-		for j, player2 := range players {
-			if i == j {
-				continue
-			}
+	player1.StartGame()
+	player2.StartGame()
 
-			// Игроки не нарушали правил
-			if _, ok := ignore[i]; ok {
-				continue
-			}
-			if _, ok := ignore[j]; ok {
-				continue
-			}
-
-			player1.StartGame()
-			player2.StartGame()
-
-			flag := false
-			for c := range count {
-				if flag {
-					break
-				}
-				if k, err := g.playRound(c, i, j, player1, player2, verbose); err != nil {
-					ignore[k] = err
-					flag = true
-				}
-			}
-
-			player1.StopGame()
-			player2.StopGame()
+	flag := false
+	for c := range count {
+		if flag {
+			break
+		}
+		if k, err := g.playRound(c, player1, player2, verbose); err != nil {
+			ignore[k] = err
+			flag = true
 		}
 	}
+
+	player1.StopGame()
+	player2.StopGame()
 
 	for i := range ignore {
 		err = errors.Join(ignore[i])

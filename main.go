@@ -18,31 +18,26 @@ func main() {
 	flag.BoolVar(verbose, "verbose", false, "Verbose mode")
 	flag.Parse()
 
-	if flag.NArg() < 3 {
+	if flag.NArg() != 3 {
 		fmt.Println("judge <args> <game> <program1> <program2>")
 		fmt.Println("games:\n", Dilemma)
 		flag.Usage()
 		return
 	}
 
-	var players []*player.Player
-
-	for i := 1; i < flag.NArg(); i++ {
-		playeri, err := player.NewPlayer(flag.Arg(i))
-		if err != nil {
-			fmt.Println(fmt.Errorf("error creating player %d: %w", i, err))
-			return
-		}
-		players = append(players, playeri)
+	player1, err := player.NewPlayer(flag.Arg(1))
+	if err != nil {
+		fmt.Println(fmt.Errorf("error creating player 1: %w", err))
+		return
 	}
 
-	// g, err := game.NewGame()
-	// if err != nil {
-	// 	fmt.Println("error creating game:", err)
-	// 	return
-	// }
+	player2, err := player.NewPlayer(flag.Arg(1))
+	if err != nil {
+		fmt.Println(fmt.Errorf("error creating player 2: %w", err))
+		return
+	}
 
-	err := game.Play(flag.Arg(0), int(*count), players, *verbose)
+	err = game.Play(flag.Arg(0), int(*count), player1, player2, *verbose)
 	if err != nil {
 		fmt.Println("error playing round:", err)
 	}
@@ -50,7 +45,7 @@ func main() {
 	if *verbose {
 		fmt.Println("Final scores")
 	}
-	for i := range players {
-		fmt.Println(players[i].GetScore())
-	}
+
+	fmt.Println(player1.GetScore())
+	fmt.Println(player2.GetScore())
 }
