@@ -23,8 +23,6 @@ func newGame(name string) (game, error) {
 }
 
 func Play(name string, count int, player1 *player.Player, player2 *player.Player, verbose bool) error {
-	var ignore map[int]error = make(map[int]error)
-
 	g, err := newGame(name)
 	if err != nil {
 		return err
@@ -39,19 +37,16 @@ func Play(name string, count int, player1 *player.Player, player2 *player.Player
 			break
 		}
 		if k, err := g.playRound(c, player1, player2, verbose); err != nil {
-			ignore[k] = err
-			flag = true
+			player1.StopGame()
+			player2.StopGame()
+			return fmt.Errorf("game error with player %d: %v", k, err)
 		}
 	}
 
 	player1.StopGame()
 	player2.StopGame()
 
-	for i := range ignore {
-		err = errors.Join(ignore[i])
-	}
-
-	return err
+	return nil
 }
 
 func getPlayerChoice(p *player.Player, verbose bool) (string, error) {
