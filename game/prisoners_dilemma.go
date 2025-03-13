@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"judge/player"
+	"time"
 )
 
 type PrisonersDilemma struct{}
@@ -20,14 +21,20 @@ func (g *PrisonersDilemma) playRound(c int, player1, player2 *player.Player, ver
 		fmt.Printf("Iteration %d:\n", c+1)
 	}
 
-	choice1, err := getPlayerChoice(player1, verbose)
+	choice1, err := player1.Receive(500 * time.Millisecond)
 	if err != nil {
-		return 1, fmt.Errorf("player %d error: %v", 1, err)
+		return 1, fmt.Errorf("failed to get choice from player 1: %v", err)
+	}
+	if verbose {
+		fmt.Printf("Player 1 choice: %s\n", choice1)
 	}
 
-	choice2, err := getPlayerChoice(player2, verbose)
+	choice2, err := player2.Receive(500 * time.Millisecond)
 	if err != nil {
-		return 2, fmt.Errorf("player %d error: %v", 2, err)
+		return 2, fmt.Errorf("failed to get choice from player 2: %v", err)
+	}
+	if verbose {
+		fmt.Printf("Player 2 choice: %s\n", choice1)
 	}
 
 	if err := g.validate(choice1); err != nil {

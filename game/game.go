@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"judge/player"
-	"time"
 )
 
 type game interface {
@@ -34,30 +33,37 @@ func Play(name string, count int, player1 *player.Player, player2 *player.Player
 		return err
 	}
 
-	player1.StartGame()
-	player2.StartGame()
+	err = player1.StartGame()
+	if err != nil {
+		return fmt.Errorf("error while game starting player 1: %v", err)
+	}
+	err = player2.StartGame()
+	if err != nil {
+		return fmt.Errorf("error while game starting player 2: %v", err)
+	}
 
 	for c := range count {
 		if k, err := g.playRound(c, player1, player2, verbose); err != nil {
-			player1.StopGame()
-			player2.StopGame()
-			return fmt.Errorf("error with game %s: player %d: %v", g.Name(), k, err)
+			err2 := player1.StopGame()
+			if err2 != nil {
+				err2 = fmt.Errorf("error while game stoping player 1: %v", err2)
+			}
+			err3 := player2.StopGame()
+			if err3 != nil {
+				err3 = fmt.Errorf("error while game stoping player 2: %v", err3)
+			}
+			return errors.Join(err2, err3, fmt.Errorf("error with game %s: player %d: %v", g.Name(), k, err))
 		}
 	}
 
-	player1.StopGame()
-	player2.StopGame()
-
-	return nil
-}
-
-func getPlayerChoice(p *player.Player, verbose bool) (string, error) {
-	choice, err := p.Receive(500 * time.Millisecond) // Таймаут 500 мс, можно поменять
+	err = player1.StopGame()
 	if err != nil {
-		return "", fmt.Errorf("failed to get choice from player: %v", err)
+		err = fmt.Errorf("error while game stoping player 1: %v", err)
 	}
-	if verbose {
-		fmt.Printf("Player choice: %s\n", choice)
+	err2 := player2.StopGame()
+	if err2 != nil {
+		err2 = fmt.Errorf("error while game stoping player 2: %v", err)
 	}
-	return choice, nil
+
+	return errors.Join(err, err2)
 }

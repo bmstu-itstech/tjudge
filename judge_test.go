@@ -103,7 +103,7 @@ func TestGame_PrisonersDilemma_SilentPlayer(t *testing.T) {
 	require.NoError(t, err)
 	timer := time.Now()
 	err = game.Play("prisoners_dilemma", 10, player1, player2, false)
-	require.ErrorContains(t, err, "failed to get choice from player: timeout exceeded")
+	require.ErrorContains(t, err, "timeout exceeded")
 	require.Equal(t, time.Now().Compare(timer.Add(time.Second)), -1)
 	require.Equal(t, player1.GetScore(), 0)
 	require.Equal(t, player2.GetScore(), 0)
