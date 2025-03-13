@@ -31,7 +31,7 @@ func main() {
 		return
 	}
 
-	player2, err := player.NewPlayer(flag.Arg(1))
+	player2, err := player.NewPlayer(flag.Arg(2))
 	if err != nil {
 		fmt.Println(fmt.Errorf("error creating player 2: %w", err))
 		return

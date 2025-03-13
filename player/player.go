@@ -94,6 +94,7 @@ func (p *Player) Send(data string) error {
 	if _, err := p.stdin.WriteString(data + "\n"); err != nil {
 		return fmt.Errorf("stdin write: %w", err)
 	}
+
 	return p.stdin.Flush()
 }
 

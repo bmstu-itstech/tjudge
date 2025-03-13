@@ -13,17 +13,23 @@ type game interface {
 	Name() string
 }
 
-func newGame(name string) (game, error) {
+func newGame(name string, count int) (game, error) {
 	switch name {
 	case "prisoners_dilemma":
 		return NewPrisonersDilemma(), nil
+	case "good_deal":
+		return NewGoodDeal(100, 50), nil
+	case "tug_of_war":
+		return NewTugOfWar(count), nil
+	case "balance_of_universe":
+		return NewBalanceOfUniverse(100), nil
 	default:
 		return nil, errors.New("unsupported game")
 	}
 }
 
 func Play(name string, count int, player1 *player.Player, player2 *player.Player, verbose bool) error {
-	g, err := newGame(name)
+	g, err := newGame(name, count)
 	if err != nil {
 		return err
 	}
@@ -31,15 +37,11 @@ func Play(name string, count int, player1 *player.Player, player2 *player.Player
 	player1.StartGame()
 	player2.StartGame()
 
-	flag := false
 	for c := range count {
-		if flag {
-			break
-		}
 		if k, err := g.playRound(c, player1, player2, verbose); err != nil {
 			player1.StopGame()
 			player2.StopGame()
-			return fmt.Errorf("game error with player %d: %v", k, err)
+			return fmt.Errorf("error with game %s: player %d: %v", g.Name(), k, err)
 		}
 	}
 

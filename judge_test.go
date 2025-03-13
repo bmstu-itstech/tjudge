@@ -62,7 +62,12 @@ func TestPlayer_TwiceStoped(t *testing.T) {
 	require.ErrorContains(t, err, "player process is not running")
 }
 
-func TestValidator(t *testing.T) {
+func TestGame_Unsupported(t *testing.T) {
+	err := game.Play("not_existing_game", 10, nil, nil, false)
+	require.ErrorContains(t, err, "unsupported game")
+}
+
+func TestValidator_PrisonersDilemma(t *testing.T) {
 	player1, err := player.NewPlayer("tests/prisoners_dilemma/kind.py")
 	require.NoError(t, err)
 	player2, err := player.NewPlayer("tests/prisoners_dilemma/evil.py")
@@ -104,7 +109,186 @@ func TestGame_PrisonersDilemma_SilentPlayer(t *testing.T) {
 	require.Equal(t, player2.GetScore(), 0)
 }
 
-func TestGame_Unsupported(t *testing.T) {
-	err := game.Play("not_existing_game", 10, nil, nil, false)
-	require.ErrorContains(t, err, "unsupported game")
+func TestGame_GoodDeal(t *testing.T) {
+	player1, err := player.NewPlayer("tests/good_deal/kind.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/good_deal/evil.py")
+	require.NoError(t, err)
+	player3, err := player.NewPlayer("tests/good_deal/smart.py")
+	require.NoError(t, err)
+	player4, err := player.NewPlayer("tests/good_deal/smart.py")
+	require.NoError(t, err)
+	err = game.Play("good_deal", 10, player1, player2, false)
+	require.NoError(t, err)
+	err = game.Play("good_deal", 10, player1, player3, false)
+	require.NoError(t, err)
+	err = game.Play("good_deal", 10, player3, player2, false)
+	require.NoError(t, err)
+	err = game.Play("good_deal", 10, player3, player4, false)
+	require.NoError(t, err)
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 500)
+	require.Equal(t, player3.GetScore(), 1000)
+	require.Equal(t, player4.GetScore(), 500)
+}
+
+func TestGame_GoodDeal_IncorrectValue(t *testing.T) {
+	player1, err := player.NewPlayer("tests/echo.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/good_deal/evil.py")
+	require.NoError(t, err)
+	err = game.Play("good_deal", 10, player2, player1, false)
+	require.ErrorContains(t, err, "invalid decision from B")
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
+	player1, err = player.NewPlayer("tests/hello.py")
+	require.NoError(t, err)
+	err = game.Play("good_deal", 10, player1, player2, false)
+	require.ErrorContains(t, err, "invalid m from A")
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
+}
+
+func TestGame_GoodDeal_SilentPlayer(t *testing.T) {
+	player1, err := player.NewPlayer("tests/silent.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/good_deal/evil.py")
+	require.NoError(t, err)
+	timer := time.Now()
+	err = game.Play("good_deal", 10, player1, player2, false)
+	require.ErrorContains(t, err, "timeout exceeded")
+	require.Equal(t, time.Now().Compare(timer.Add(time.Second)), -1)
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
+}
+
+func TestGame_GoodDeal_TooBigAndTooLitleInput(t *testing.T) {
+	player1, err := player.NewPlayer("tests/good_deal/tooBigInput.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/good_deal/tooLitleInput.py")
+	require.NoError(t, err)
+	err = game.Play("good_deal", 10, player1, player2, false)
+	require.ErrorContains(t, err, "invalid m from A")
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
+	err = game.Play("good_deal", 10, player2, player1, false)
+	require.ErrorContains(t, err, "invalid m from A")
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
+}
+
+func TestGame_TugOfWar(t *testing.T) {
+	player1, err := player.NewPlayer("tests/tug_of_war/default.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/tug_of_war/default2.py")
+	require.NoError(t, err)
+	player3, err := player.NewPlayer("tests/tug_of_war/always_lose.py")
+	require.NoError(t, err)
+	player4, err := player.NewPlayer("tests/tug_of_war/spender.py")
+	require.NoError(t, err)
+	err = game.Play("tug_of_war", 10, player4, player3, false)
+	require.NoError(t, err)
+	require.Equal(t, player4.GetScore(), 1)
+	require.Equal(t, player3.GetScore(), 9) // Транжира потратил всю энергию в первом раунде, то есть проиграл во всех последующих
+	err = game.Play("tug_of_war", 10, player1, player3, false)
+	require.NoError(t, err)
+	require.Equal(t, player1.GetScore(), 10) // Выиграл все 10 раундов
+	require.Equal(t, player3.GetScore(), 9)
+	err = game.Play("tug_of_war", 10, player1, player2, false)
+	require.NoError(t, err)
+	require.Equal(t, player1.GetScore(), 11) // Выиграл 1 раунд,
+	require.Equal(t, player2.GetScore(), 9)  // Выиграл 9 раундов - см. примечания к игре в режиме отладки
+}
+
+func TestGame_TugOfWar_IncorrectValue(t *testing.T) {
+	player1, err := player.NewPlayer("tests/hello.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/tug_of_war/default.py")
+	require.NoError(t, err)
+	err = game.Play("tug_of_war", 10, player1, player2, false)
+	require.ErrorContains(t, err, "invalid syntax")
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
+}
+
+func TestGame_TugOfWar_SilentPlayer(t *testing.T) {
+	player1, err := player.NewPlayer("tests/silent.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/tug_of_war/default.py")
+	require.NoError(t, err)
+	timer := time.Now()
+	err = game.Play("tug_of_war", 10, player1, player2, false)
+	require.ErrorContains(t, err, "timeout exceeded")
+	require.Equal(t, time.Now().Compare(timer.Add(time.Second)), -1)
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
+}
+
+func TestGame_TugOfWar_TooBigAndTooLitleInput(t *testing.T) {
+	player1, err := player.NewPlayer("tests/tug_of_war/tooBigInput.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/tug_of_war/tooLitleInput.py")
+	require.NoError(t, err)
+	err = game.Play("tug_of_war", 10, player1, player2, false)
+	require.NoError(t, err)
+	require.Equal(t, player1.GetScore(), 1) // Потратил всю энергию в первом раунде, второй игрок ввёл отрицательное число, то есть сдался
+	require.Equal(t, player2.GetScore(), 9) // Хотя он и вводит всегда отрицательные числа, по правилу он выиграл все оставшиеся раунды, так как у него остались силы
+}
+
+func TestGame_BalanceOfUniverse(t *testing.T) {
+	player1, err := player.NewPlayer("tests/balance_of_universe/default.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/balance_of_universe/default.py")
+	require.NoError(t, err)
+	player3, err := player.NewPlayer("tests/balance_of_universe/negative_value.py")
+	require.NoError(t, err)
+	player4, err := player.NewPlayer("tests/balance_of_universe/spender.py")
+	require.NoError(t, err)
+	err = game.Play("balance_of_universe", 10, player1, player2, false)
+	require.NoError(t, err)
+	require.Equal(t, player1.GetScore(), 200)
+	require.Equal(t, player2.GetScore(), 200)
+	err = game.Play("balance_of_universe", 10, player1, player3, false)
+	require.ErrorContains(t, err, "invalid input")
+	require.Equal(t, player1.GetScore(), 200)
+	require.Equal(t, player3.GetScore(), 0)
+	err = game.Play("balance_of_universe", 10, player1, player4, false)
+	require.NoError(t, err)
+	require.Equal(t, player1.GetScore(), 299) // +100 за раунд, -1 в первом раунде, остальное на счёт
+	require.Equal(t, player4.GetScore(), 101) // +100 за раунд, +1 за первый раунд, остальное "проиграл"
+}
+
+func TestGame_BalanceOfUniverse_IncorrectValue(t *testing.T) {
+	player1, err := player.NewPlayer("tests/hello.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/balance_of_universe/default.py")
+	require.NoError(t, err)
+	err = game.Play("balance_of_universe", 10, player1, player2, false)
+	require.ErrorContains(t, err, "invalid input")
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
+}
+
+func TestGame_BalanceOfUniverse_SilentPlayer(t *testing.T) {
+	player1, err := player.NewPlayer("tests/silent.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/balance_of_universe/default.py")
+	require.NoError(t, err)
+	timer := time.Now()
+	err = game.Play("balance_of_universe", 10, player1, player2, false)
+	require.ErrorContains(t, err, "timeout exceeded")
+	require.Equal(t, time.Now().Compare(timer.Add(time.Second)), -1)
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
+}
+
+func TestGame_BalanceOfUniverse_TooBigAndTooLitleInput(t *testing.T) {
+	player1, err := player.NewPlayer("tests/balance_of_universe/tooBigInput.py")
+	require.NoError(t, err)
+	player2, err := player.NewPlayer("tests/balance_of_universe/tooLitleInput.py")
+	require.NoError(t, err)
+	err = game.Play("balance_of_universe", 10, player1, player2, false)
+	require.ErrorContains(t, err, "invalid input")
+	require.Equal(t, player1.GetScore(), 0)
+	require.Equal(t, player2.GetScore(), 0)
 }
