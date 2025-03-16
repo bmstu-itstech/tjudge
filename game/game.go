@@ -27,19 +27,19 @@ func newGame(name string, count int) (game, error) {
 	}
 }
 
-func Play(name string, count int, player1 *player.Player, player2 *player.Player, verbose bool) error {
+func Play(name string, count int, player1 *player.Player, player2 *player.Player, verbose bool) (int, error) {
 	g, err := newGame(name, count)
 	if err != nil {
-		return err
+		return 3, err
 	}
 
 	err = player1.StartGame()
 	if err != nil {
-		return fmt.Errorf("error while game starting player 1: %v", err)
+		return 1, fmt.Errorf("error while game starting player 1: %v", err)
 	}
 	err = player2.StartGame()
 	if err != nil {
-		return fmt.Errorf("error while game starting player 2: %v", err)
+		return 2, fmt.Errorf("error while game starting player 2: %v", err)
 	}
 
 	for c := range count {
@@ -52,18 +52,22 @@ func Play(name string, count int, player1 *player.Player, player2 *player.Player
 			if err3 != nil {
 				err3 = fmt.Errorf("error while game stoping player 2: %v", err3)
 			}
-			return errors.Join(err2, err3, fmt.Errorf("error with game %s: player %d: %v", g.Name(), k, err))
+			return k, errors.Join(err2, err3, fmt.Errorf("error with game %s: player %d: %v", g.Name(), k, err))
 		}
 	}
+
+	k := 0
 
 	err = player1.StopGame()
 	if err != nil {
 		err = fmt.Errorf("error while game stoping player 1: %v", err)
+		k = 1
 	}
 	err2 := player2.StopGame()
 	if err2 != nil {
 		err2 = fmt.Errorf("error while game stoping player 2: %v", err)
+		k += 2
 	}
 
-	return errors.Join(err, err2)
+	return k, errors.Join(err, err2)
 }
