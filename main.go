@@ -15,7 +15,7 @@ func Errorf(format string, a ...interface{}) {
 
 func main() {
 	count := flag.Uint("c", 1, "Count of round (short)")
-	flag.UintVar(count, "count", 1, "Count of round")
+	flag.UintVar(count, "count", 10, "Count of round")
 	verbose := flag.Bool("v", false, "Verbose mode (short)")
 	flag.BoolVar(verbose, "verbose", false, "Verbose mode")
 	flag.Parse()
