@@ -8,9 +8,10 @@ import (
 	"os"
 )
 
-const (
-	Dilemma = "prisoners_dilemma"
-)
+func Errorf(format string, a ...interface{}) {
+	format = fmt.Sprintf("error: %s\n", format)
+	_, _ = fmt.Fprintf(os.Stderr, format, a...)
+}
 
 func main() {
 	count := flag.Uint("c", 1, "Count of round (short)")
@@ -18,29 +19,32 @@ func main() {
 	verbose := flag.Bool("v", false, "Verbose mode (short)")
 	flag.BoolVar(verbose, "verbose", false, "Verbose mode")
 	flag.Parse()
+	flag.Usage = func() {
+		fmt.Printf("Usage of %s [args] game prorgam1 program2:\n", os.Args[0])
+		fmt.Println("Args:")
+		flag.PrintDefaults()
+	}
 
 	if flag.NArg() != 3 {
-		fmt.Println("judge <args> <game> <program1> <program2>")
-		fmt.Println("games:\n", Dilemma)
 		flag.Usage()
 		return
 	}
 
 	player1, err := player.NewPlayer(flag.Arg(1))
 	if err != nil {
-		fmt.Println(fmt.Errorf("error creating player 1: %w", err))
+		Errorf("failed to create player 1: %s", err)
 		os.Exit(3)
 	}
 
 	player2, err := player.NewPlayer(flag.Arg(2))
 	if err != nil {
-		fmt.Println(fmt.Errorf("error creating player 2: %w", err))
+		Errorf("failed to create player 2: %s", err)
 		os.Exit(3)
 	}
 
 	k, err := game.Play(flag.Arg(0), int(*count), player1, player2, *verbose)
 	if err != nil {
-		fmt.Println("error playing round:", err)
+		Errorf("error while playing round: %s", err)
 		os.Exit(k)
 	}
 

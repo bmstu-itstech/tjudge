@@ -62,7 +62,8 @@ func (p *Player) StartGame() error {
 		return errors.New("player is already running")
 	}
 
-	cmd := exec.Command(p.path)
+	cmd := exec.Command("python3")
+	cmd.Args = append(cmd.Args, p.path)
 
 	stdinPipe, err := cmd.StdinPipe()
 	if err != nil {
