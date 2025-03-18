@@ -51,18 +51,6 @@ func (g *BalanceOfUniverse) playRound(c int, player1, player2 *player.Player, ve
 				fmt.Printf("both players have used all their bullions\n")
 			}
 			break
-		} else if g.used1 == g.n {
-			player2.AddScore(g.n - g.used2)
-			if verbose {
-				fmt.Printf("player 1 have used all his bullions, so player 2 get remaining %d bullions\n", g.n-g.used2)
-			}
-			break
-		} else if g.used2 == g.n {
-			player1.AddScore(g.n - g.used1)
-			if verbose {
-				fmt.Printf("player 2 have used all his bullions, so player 1 get remaining %d bullions\n", g.n-g.used2)
-			}
-			break
 		}
 
 		aStr, err := player1.Receive(500 * time.Millisecond)
